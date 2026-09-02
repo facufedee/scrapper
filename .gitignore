@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+data/
+logs/
+.env
+.env.*
+!.env.example
+
+# Nested Next.js app — its own git repo (web/.git), not part of this one.
+web/
