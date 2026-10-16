@@ -30,7 +30,9 @@ valuation logic must live in a pure, testable module so the API layer stays thin
 - [x] T1 Shared normalization module + currency validator on `PropertyItem` (route: inline)
 - [x] T2 Valuation domain (pure functions) with unit tests (route: inline)
 - [x] T3 Repository + service with radius expansion, tested on in-memory SQLite (route: inline)
-- [ ] T4 Smoke-run the engine against the real DB (route: inline)
+- [x] T4 Smoke-run the engine against the real DB (route: inline)
+- [x] T5 Exclude placeholder coordinates shared by many listings (route: inline)
+- [ ] T6 Geographic (lat, lon) index for sub-second candidate queries (route: inline)
 
 ## Route declaration
 Inline: the parent already holds the full data-quality evidence from exploration; the
@@ -52,3 +54,7 @@ modules are new, small and self-contained. Recorded so skipped delegation is obs
   extra `price_history` row on next scrape for rows stored as `US$` (one-time, harmless).
 - T2: RED observed (module missing), GREEN 71 passed (14 domain tests).
 - T3: RED observed (module missing), GREEN 79 passed (8 service tests on in-memory SQLite).
+- T4: smoke on real DB OK (Palermo apt 60m2 USD 193k, Caballito apt 45m2 USD 95k). Type coverage 92%.
+  Found 1,768 listings from one source on a single point in Castelar (placeholder location) and
+  ~3,400 rows on points shared by >=10 listings; queries take ~0.9 s (no lat/lon index). Added T5, T6.
+- T5: RED observed (placeholder listings counted), GREEN 80 passed.

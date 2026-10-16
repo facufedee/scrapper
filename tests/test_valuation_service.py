@@ -118,6 +118,19 @@ def test_expands_radius_when_nearby_comparables_are_scarce(session):
     assert valuation.comparables_count == 13
 
 
+def test_ignores_placeholder_coordinates_shared_by_many_listings(session):
+    for price in (95_000, 100_000, 105_000, 110_000, 115_000):
+        add_listing(session, price=price)
+    placeholder = dict(lat=ORIGIN_LAT + 0.001, lon=ORIGIN_LON + 0.001)
+    for i in range(10):
+        add_listing(session, price=500_000 + i * 1_000, **placeholder)
+
+    valuation = value_property(session, apartment())
+
+    assert valuation.comparables_count == 5
+    assert valuation.estimated_value_usd == 105_000
+
+
 def test_raises_when_not_enough_comparables_within_max_radius(session):
     for price in (100_000, 110_000):
         add_listing(session, price=price)

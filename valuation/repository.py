@@ -5,6 +5,7 @@ sees clean, comparable data, and the stored data does not need to be rewritten.
 """
 
 import math
+from collections import Counter
 from typing import Optional
 
 from sqlalchemy import select
@@ -15,6 +16,14 @@ from pipeline.normalize import canonical_property_type, normalize_currency
 from valuation.domain import Comparable, haversine_km
 
 KM_PER_LAT_DEGREE = 111.32
+# Some sources geocode listings they cannot locate to a fixed point (e.g. their office),
+# so a single coordinate ends up holding hundreds of unrelated listings. A point shared by
+# this many listings is treated as an unknown location.
+PLACEHOLDER_LOCATION_MIN_LISTINGS = 10
+
+
+def _point(lat: float, lon: float) -> tuple[float, float]:
+    return round(lat, 5), round(lon, 5)  # ~1 m
 
 
 def _area_m2(property_type: str, row) -> Optional[float]:
@@ -55,8 +64,12 @@ def find_candidates(
         )
     ).all()
 
+    listings_per_point = Counter(_point(row.lat, row.lon) for row in rows)
+
     candidates: list[Comparable] = []
     for row in rows:
+        if listings_per_point[_point(row.lat, row.lon)] >= PLACEHOLDER_LOCATION_MIN_LISTINGS:
+            continue
         if normalize_currency(row.currency) != "USD":
             continue
         if canonical_property_type(row.property_type) != property_type:
