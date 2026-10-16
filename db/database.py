@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 import config
-from db.models import Base
+from db.models import Base, Property
 
 _is_sqlite = config.DATABASE_URL.startswith("sqlite")
 
@@ -33,8 +33,19 @@ if _is_sqlite:
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 
-def init_db() -> None:
-    Base.metadata.create_all(engine)
+# Indexes declared after the table already existed in deployed databases. create_all()
+# only creates indexes together with a new table, so these are added explicitly. Not all
+# model indexes are ensured here: older ones exist under hand-made names (idx_*) and would
+# be duplicated under SQLAlchemy's default names (ix_*).
+_LATE_INDEXES = ("idx_properties_lat_lon",)
+
+
+def init_db(bind=None) -> None:
+    bind = bind or engine
+    Base.metadata.create_all(bind)
+    for index in Property.__table__.indexes:
+        if index.name in _LATE_INDEXES:
+            index.create(bind, checkfirst=True)
 
 
 def get_session():

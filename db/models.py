@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     String,
@@ -27,7 +28,11 @@ class Property(Base):
     which site it came from — this is the common schema every scraper writes into."""
 
     __tablename__ = "properties"
-    __table_args__ = (UniqueConstraint("source", "source_id", name="uq_source_id"),)
+    __table_args__ = (
+        UniqueConstraint("source", "source_id", name="uq_source_id"),
+        # Bounding-box lookups for valuation comparables (valuation.repository).
+        Index("idx_properties_lat_lon", "lat", "lon"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 

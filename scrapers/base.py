@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Iterator, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from pipeline.normalize import normalize_currency
 
 
 class PropertyItem(BaseModel):
@@ -44,6 +46,12 @@ class PropertyItem(BaseModel):
 
     photos: list[str] = Field(default_factory=list)
     raw: dict = Field(default_factory=dict)
+
+    @field_validator("currency", "expenses_currency", mode="before")
+    @classmethod
+    def _normalize_currency(cls, value: Optional[str]) -> Optional[str]:
+        # Sources spell the same currency many ways ("US$", "u$s", "$"...); store ISO codes.
+        return normalize_currency(value)
 
 
 class BaseScraper(ABC):
