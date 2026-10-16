@@ -28,7 +28,7 @@ valuation logic must live in a pure, testable module so the API layer stays thin
 
 ## Tasks
 - [x] T1 Shared normalization module + currency validator on `PropertyItem` (route: inline)
-- [ ] T2 Valuation domain (pure functions) with unit tests (route: inline)
+- [x] T2 Valuation domain (pure functions) with unit tests (route: inline)
 - [ ] T3 Repository + service with radius expansion, tested on in-memory SQLite (route: inline)
 - [ ] T4 Smoke-run the engine against the real DB (route: inline)
 
@@ -50,3 +50,4 @@ modules are new, small and self-contained. Recorded so skipped delegation is obs
 (see below, updated per task)
 - T1: RED observed (module missing), GREEN 57 passed. Currency validator on `PropertyItem` will add one
   extra `price_history` row on next scrape for rows stored as `US$` (one-time, harmless).
+- T2: RED observed (module missing), GREEN 71 passed (14 domain tests).
