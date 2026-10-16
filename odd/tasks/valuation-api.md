@@ -28,7 +28,7 @@ to hand to clients. GraphQL adds no value for one fixed-shape query.
 
 ## Tasks
 - [x] T1 Request/response schemas + `POST /v1/valuations` + `/health` (route: inline)
-- [ ] T2 API key authentication (route: inline)
+- [x] T2 API key authentication (route: inline)
 - [ ] T3 Per-key rate limiting (route: inline)
 - [ ] T4 Run the server against a local copy of the real DB and verify via HTTP (route: inline)
 
@@ -46,3 +46,4 @@ Inline: small new package with already-designed contracts; the parent holds the 
 
 ## Progress / evidence
 - T1: RED observed (api package missing), GREEN 89 passed.
+- T2: RED observed (api.keys missing), GREEN 95 passed. Keys stored as sha256 in ZANO_API_KEYS; empty = deny all.

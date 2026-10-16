@@ -6,13 +6,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from api.keys import generate_api_key, hash_api_key
 from api.main import create_app
-from api.settings import ApiSettings
+from api.settings import ApiSettings, parse_api_keys
 from db.models import Base, Property
 
 ORIGIN_LAT, ORIGIN_LON = -34.6037, -58.3816
 KM_PER_LAT_DEGREE = 111.32
 
+TEST_KEY = "zano_test_key"
 VALID_BODY = {"lat": ORIGIN_LAT, "lon": ORIGIN_LON, "property_type": "apartment", "area_m2": 50}
 
 
@@ -25,8 +27,9 @@ def session_factory():
 
 @pytest.fixture
 def client(session_factory):
-    app = create_app(settings=ApiSettings(), session_factory=session_factory)
-    return TestClient(app)
+    settings = ApiSettings(api_keys={hash_api_key(TEST_KEY): "zetaprop"})
+    app = create_app(settings=settings, session_factory=session_factory)
+    return TestClient(app, headers={"X-API-Key": TEST_KEY})
 
 
 def seed_listings(session_factory, prices=(95_000, 100_000, 105_000, 110_000, 115_000)):
@@ -114,3 +117,47 @@ def test_valuation_rejects_invalid_input(client, override):
 
 def test_openapi_documents_the_valuation_endpoint(client):
     assert "/v1/valuations" in client.get("/openapi.json").json()["paths"]
+
+
+def test_valuation_requires_an_api_key(client, session_factory):
+    seed_listings(session_factory)
+
+    response = client.post("/v1/valuations", json=VALID_BODY, headers={"X-API-Key": ""})
+
+    assert response.status_code == 401
+    assert response.json()["detail"]["code"] == "invalid_api_key"
+
+
+def test_valuation_rejects_an_unknown_api_key(client, session_factory):
+    seed_listings(session_factory)
+
+    response = client.post("/v1/valuations", json=VALID_BODY, headers={"X-API-Key": "zano_stolen"})
+
+    assert response.status_code == 401
+
+
+def test_no_configured_keys_means_nobody_gets_in(session_factory):
+    app = create_app(settings=ApiSettings(), session_factory=session_factory)
+    client = TestClient(app, headers={"X-API-Key": TEST_KEY})
+
+    assert client.post("/v1/valuations", json=VALID_BODY).status_code == 401
+
+
+def test_parse_api_keys_maps_hash_to_client():
+    assert parse_api_keys(" zetaprop:abc , other:def ") == {"abc": "zetaprop", "def": "other"}
+    assert parse_api_keys("") == {}
+    assert parse_api_keys(None) == {}
+
+
+def test_parse_api_keys_rejects_malformed_entries():
+    with pytest.raises(ValueError):
+        parse_api_keys("zetaprop-without-hash")
+
+
+def test_generated_keys_are_unique_and_verifiable():
+    key_a, hash_a = generate_api_key()
+    key_b, _ = generate_api_key()
+
+    assert key_a != key_b
+    assert key_a.startswith("zano_")
+    assert hash_api_key(key_a) == hash_a
