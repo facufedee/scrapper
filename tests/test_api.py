@@ -151,3 +151,14 @@ def test_generated_keys_are_unique_and_verifiable():
     assert key_a != key_b
     assert key_a.startswith("zano_")
     assert hash_api_key(key_a) == hash_a
+
+
+def test_openapi_declares_the_api_key_security_scheme(client):
+    schema = client.get("/openapi.json").json()
+
+    assert schema["components"]["securitySchemes"]["APIKeyHeader"] == {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+    }
+    assert schema["paths"]["/v1/valuations"]["post"]["security"] == [{"APIKeyHeader": []}]

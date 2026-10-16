@@ -163,3 +163,23 @@ comando: hace upsert por `source_id`, no duplica, y va guardando el historial de
   largo antes de ir a un scrape completo.
 - Sumar MercadoLibre Inmuebles e inmobiliarias sueltas siguiendo el mismo patrón de adapter.
 - Migrar a PostgreSQL si en algún momento varias apps necesitan leer/escribir concurrentemente.
+
+## API de tasaciones
+
+Expone el motor de tasación (`valuation/`) como API REST para ZetaProp y otros clientes.
+
+```bash
+pip install -r requirements.txt
+uvicorn api.main:create_app --factory --port 8000
+```
+
+Documentación interactiva (OpenAPI) en `http://localhost:8000/docs`.
+
+- `POST /v1/valuations` con `{"lat", "lon", "property_type", "area_m2"}` devuelve valor estimado, rango,
+  USD/m² mediano, comparables y nivel de confianza. Responde 422 si no hay comparables suficientes.
+- Autenticación: header `X-API-Key`. Para dar de alta un cliente, `python -m api.keys <cliente>`: imprime la
+  key (se entrega al cliente y no se guarda) y la entrada `cliente:hash` para sumar a `ZANO_API_KEYS`
+  (separadas por coma). Sin keys configuradas, todo request da 401.
+- Rate limit por key: `ZANO_RATE_LIMIT_PER_MINUTE` (default 60). Es en memoria, así que vale para un solo
+  proceso: con varios workers o instancias hace falta un store compartido (Redis).
+- Los valores son precios de publicación, no de cierre: no es una tasación formal.

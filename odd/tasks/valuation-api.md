@@ -30,7 +30,7 @@ to hand to clients. GraphQL adds no value for one fixed-shape query.
 - [x] T1 Request/response schemas + `POST /v1/valuations` + `/health` (route: inline)
 - [x] T2 API key authentication (route: inline)
 - [x] T3 Per-key rate limiting (route: inline)
-- [ ] T4 Run the server against a local copy of the real DB and verify via HTTP (route: inline)
+- [x] T4 Run the server against a local copy of the real DB and verify via HTTP (route: inline)
 
 ## Route declaration
 Inline: small new package with already-designed contracts; the parent holds the engine context.
@@ -48,3 +48,12 @@ Inline: small new package with already-designed contracts; the parent holds the 
 - T1: RED observed (api package missing), GREEN 89 passed.
 - T2: RED observed (api.keys missing), GREEN 95 passed. Keys stored as sha256 in ZANO_API_KEYS; empty = deny all.
 - T3: RED observed (api.rate_limit missing), GREEN 99 passed. In-memory per-process limiter; Redis needed for multi-worker.
+- T4: live uvicorn run against a local SQLite copy (never Supabase). /health 200; no key 401; invalid key 401;
+  Palermo apt 60m2 200 (USD 193k, 0.48 s incl. first request); remote area 422 insufficient_comparables;
+  invalid type 422; 6th counted request 429 with Retry-After. Found /docs lacked an Authorize button:
+  switched to APIKeyHeader security scheme (RED->GREEN, 100 passed). Note: requests with invalid bodies
+  also count against the rate limit.
+
+## Next step
+Deploy: hosting for the API, create `idx_properties_lat_lon` on Supabase (runs via init_db on next
+`cli.py run`), generate the ZetaProp key, and integrate the call from ZetaProp's backend (never the browser).
