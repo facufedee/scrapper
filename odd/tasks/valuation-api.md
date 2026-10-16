@@ -54,6 +54,15 @@ Inline: small new package with already-designed contracts; the parent holds the 
   switched to APIKeyHeader security scheme (RED->GREEN, 100 passed). Note: requests with invalid bodies
   also count against the rate limit.
 
+## Review
+Native review (medium risk, consent granted, lens: reliability): approved and acknowledged
+(lineage review-984bd2e8764f352e). Non-blocking suggestions for later:
+- Invalid request bodies count against the rate limit; untested (api/dependencies.py).
+- `load_settings()` env parsing is untested (api/settings.py).
+- Missing-header case only tested with an empty header value (tests/test_api.py).
+- Rate-limit headers are lost when the endpoint itself errors (api/dependencies.py).
+- DB session is opened before auth runs (api/routes.py dependency order).
+
 ## Next step
 Deploy: hosting for the API, create `idx_properties_lat_lon` on Supabase (runs via init_db on next
 `cli.py run`), generate the ZetaProp key, and integrate the call from ZetaProp's backend (never the browser).
