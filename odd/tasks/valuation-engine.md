@@ -62,5 +62,15 @@ modules are new, small and self-contained. Recorded so skipped delegation is obs
   End-to-end smoke on copy: 150-250 ms per valuation; Castelar house comparables 390 -> 53 (USD/m2 1,000 -> 1,508)
   after T5. The real DB gets the index on the next `cli.py run` (init_db); it was not modified in this feature.
 
+## Review
+Native review (medium risk, consent granted, lens: reliability): approved and acknowledged
+(lineage review-831409253dc96b16). Non-blocking advisory findings, to address in a later task:
+- WARNING placeholder heuristic may drop real buildings with >=10 listings on one point (valuation/repository.py).
+- WARNING service tests depend on a module-level id counter / ordering (tests/test_valuation_service.py).
+- WARNING tuning params (radii, target, min) are not validated (valuation/domain.py, valuation/service.py).
+- SUGGESTION dedupe keeps whichever duplicate the query returns first (non-deterministic keeper).
+- SUGGESTION subject coordinates are not range-validated (belongs in the API request schema).
+- SUGGESTION currency validator assumes str input (scrapers/base.py).
+
 ## Next step
 FastAPI layer (`POST /v1/valuations`), API keys, rate limiting, then Postgres migration for serving.
