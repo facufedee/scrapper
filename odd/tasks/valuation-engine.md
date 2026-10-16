@@ -32,7 +32,7 @@ valuation logic must live in a pure, testable module so the API layer stays thin
 - [x] T3 Repository + service with radius expansion, tested on in-memory SQLite (route: inline)
 - [x] T4 Smoke-run the engine against the real DB (route: inline)
 - [x] T5 Exclude placeholder coordinates shared by many listings (route: inline)
-- [ ] T6 Geographic (lat, lon) index for sub-second candidate queries (route: inline)
+- [x] T6 Geographic (lat, lon) index for sub-second candidate queries (route: inline)
 
 ## Route declaration
 Inline: the parent already holds the full data-quality evidence from exploration; the
@@ -58,3 +58,9 @@ modules are new, small and self-contained. Recorded so skipped delegation is obs
   Found 1,768 listings from one source on a single point in Castelar (placeholder location) and
   ~3,400 rows on points shared by >=10 listings; queries take ~0.9 s (no lat/lon index). Added T5, T6.
 - T5: RED observed (placeholder listings counted), GREEN 80 passed.
+- T6: RED observed (index missing), GREEN 81 passed. On a DB copy: bbox query 824 ms -> 100 ms, index build 0.5 s.
+  End-to-end smoke on copy: 150-250 ms per valuation; Castelar house comparables 390 -> 53 (USD/m2 1,000 -> 1,508)
+  after T5. The real DB gets the index on the next `cli.py run` (init_db); it was not modified in this feature.
+
+## Next step
+FastAPI layer (`POST /v1/valuations`), API keys, rate limiting, then Postgres migration for serving.
