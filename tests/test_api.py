@@ -2,27 +2,17 @@ import itertools
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from api.keys import generate_api_key, hash_api_key
 from api.main import create_app
 from api.settings import ApiSettings, parse_api_keys
-from db.models import Base, Property
+from db.models import Property
 
 ORIGIN_LAT, ORIGIN_LON = -34.6037, -58.3816
 KM_PER_LAT_DEGREE = 111.32
 
 TEST_KEY = "zano_test_key"
 VALID_BODY = {"lat": ORIGIN_LAT, "lon": ORIGIN_LON, "property_type": "apartment", "area_m2": 50}
-
-
-@pytest.fixture
-def session_factory():
-    engine = create_engine("sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False})
-    Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine)
 
 
 @pytest.fixture

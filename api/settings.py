@@ -9,6 +9,7 @@ from typing import Optional
 class ApiSettings:
     # sha256 hex digest of the API key -> client name. Empty means every request is rejected.
     api_keys: dict[str, str] = field(default_factory=dict)
+    rate_limit_per_minute: int = 60
 
 
 def parse_api_keys(raw: Optional[str]) -> dict[str, str]:
@@ -28,4 +29,7 @@ def parse_api_keys(raw: Optional[str]) -> dict[str, str]:
 def load_settings() -> ApiSettings:
     import config  # noqa: F401  (loads .env into the environment)
 
-    return ApiSettings(api_keys=parse_api_keys(os.getenv("ZANO_API_KEYS")))
+    return ApiSettings(
+        api_keys=parse_api_keys(os.getenv("ZANO_API_KEYS")),
+        rate_limit_per_minute=int(os.getenv("ZANO_RATE_LIMIT_PER_MINUTE", "60")),
+    )

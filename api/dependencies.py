@@ -2,7 +2,7 @@
 
 from typing import Iterator, Optional
 
-from fastapi import Header, HTTPException, Request
+from fastapi import Depends, Header, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from api.keys import hash_api_key
@@ -23,4 +23,18 @@ def require_client(
             status_code=401,
             detail={"code": "invalid_api_key", "message": "Missing or invalid X-API-Key header"},
         )
+    return client
+
+
+def enforce_rate_limit(request: Request, response: Response, client: str = Depends(require_client)) -> str:
+    """Count the request against the client's quota; reject with 429 once exceeded."""
+    decision = request.app.state.rate_limiter.hit(client)
+    headers = {"X-RateLimit-Limit": str(decision.limit), "X-RateLimit-Remaining": str(decision.remaining)}
+    if not decision.allowed:
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "rate_limit_exceeded", "message": "Too many requests for this API key"},
+            headers={**headers, "Retry-After": str(decision.retry_after_seconds)},
+        )
+    response.headers.update(headers)
     return client

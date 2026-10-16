@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from api.dependencies import get_session, require_client
+from api.dependencies import enforce_rate_limit, get_session
 from api.schemas import ComparableOut, PriceRange, ValuationRequest, ValuationResponse
 from valuation.domain import InsufficientComparablesError, Subject
 from valuation.service import value_property
@@ -20,13 +20,14 @@ def health() -> dict:
     tags=["valuations"],
     responses={
         401: {"description": "Missing or invalid X-API-Key header"},
+        429: {"description": "Rate limit exceeded; see the Retry-After header"},
         422: {"description": "Invalid input or not enough comparable listings nearby"},
     },
 )
 def create_valuation(
     body: ValuationRequest,
     session: Session = Depends(get_session),
-    client: str = Depends(require_client),
+    client: str = Depends(enforce_rate_limit),
 ) -> ValuationResponse:
     subject = Subject(lat=body.lat, lon=body.lon, property_type=body.property_type.value, area_m2=body.area_m2)
     try:
